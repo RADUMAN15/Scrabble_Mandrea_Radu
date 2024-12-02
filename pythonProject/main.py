@@ -34,13 +34,13 @@ scrabble_letters = {
 
 scrabble_list = [letter for letter, count in scrabble_letters.items() for _ in range(count)]
 
-def draw_tiles(num_tiles=7):
+def take_tiles_from_bag_at_start(num_tiles=7):
     global scrabble_list
     drawn_tiles = random.sample(scrabble_list, num_tiles)
     for tile in drawn_tiles:
         scrabble_list.remove(tile)
     return drawn_tiles
-def fill_with_tiles(player):
+def take_tiles_from_bag_after_word(player):
 
     missing = sum(1 for tile in player if tile == '')
 
@@ -53,18 +53,16 @@ def fill_with_tiles(player):
         if player[i] == '':
             player[i] = drawn_tiles.pop(0)
 
-
-player1 = draw_tiles()
-player2 = draw_tiles()
-player3 = draw_tiles()
-player4 = draw_tiles()
+player1 = take_tiles_from_bag_at_start()
+player2 = take_tiles_from_bag_at_start()
+player3 = take_tiles_from_bag_at_start()
+player4 = take_tiles_from_bag_at_start()
 
 player_turn = 1
-player_selected_tile = False
-player_selected_letter = False
+letter_was_placed = True
 
-board = [[''] * 15] * 15
-word = ""
+board = [['' for _ in range(15)] for _ in range(15)]
+word = []
 letter = ""
 letter_id = 0
 
@@ -77,7 +75,6 @@ def get_cell_type(row, col):
 def draw_scrabble_board():
 
     window.geometry(f"{screen_width}x{screen_height}")
-
 
     for row in range(board_size):
         for col in range(board_size):
@@ -159,7 +156,7 @@ def draw_players_board():
                                y1 + cell_size / 2,
                                text=player4[i], font=("Arial Black", 10, "bold"), fill="black")
 
-def choose_a_tile(col, row, _letter):
+def paint(col, row, _letter):
 
     x1 = board_x_start + col * cell_size
     y1 = board_y_start + row * cell_size
@@ -176,131 +173,217 @@ def choose_a_tile(col, row, _letter):
                            y1 + cell_size / 2,
                            text=_letter, font=("Arial Black", 14, "bold"), fill="black")
 
+def get_crossed_words(wrd: [(str, int, int)]):
+
+    initial = wrd.copy()
+
+    # #caut literelel
+    # d = [(0,1), (1,0), (0,-1), (-1,0)]
+    # for i in range(len(wrd)):
+    #     (_, line, col) = wrd[i]
+    #     for j in range(4):
+    #         if  0 <= line + d[j][0] <= 15 and 0 <= col + d[j][1] <= 15 and board[line + d[j][0]][col + d[j][1]] != '':
+    #             if (board[line + d[j][0]][col + d[j][1]], line + d[j][0], col + d[j][1]) not in wrd:
+    #                 wrd.append((board[line + d[j][0]][col + d[j][1]], line + d[j][0], col + d[j][1]))
+
+
+    board_words = []
+
+    for i in range(15):
+        new_word = []
+        for j in range(15):
+            if board[j][i] != '':
+                new_word.append((board[j][i], j, i))
+            else:
+                if len(new_word) > 1:
+                    board_words.append(new_word.copy())
+                new_word.clear()
+
+        if len(new_word) > 1:
+            board_words.append(new_word.copy())
+    for i in range(15):
+        new_word = []
+        for j in range(15):
+            if board[i][j] != '':
+                new_word.append((board[i][j], i, j))
+            else:
+                if len(new_word) > 1:
+                    board_words.append(new_word.copy())
+                new_word.clear()
+        if len(new_word) > 1:
+            board_words.append(new_word.copy())
+
+    filtered_words = []
+    for word in board_words:
+        in_selected_letter = False
+        for letter in word:
+            if letter in initial:
+                in_selected_letter = True
+                break
+
+        if in_selected_letter:
+            filtered_words.append(word)
+
+    print(f"Cuvinte formate: {filtered_words}")
+
+def get_word_direction(wrd: [(str, int, int)]):
+    is_line_constant = True
+    is_column_constant = True
+
+    for i in range(len(wrd) - 1):
+        (_, line_old, col_old) = wrd[i]
+        (_, line_new, col_new) = wrd[i + 1]
+
+        if line_old != line_new:
+            is_line_constant = False
+        if col_old != col_new:
+            is_column_constant = False
+
+    if is_line_constant:
+        return "H"
+    elif is_column_constant:
+        return "V"
+
+    return "U" # the letters were placed wrong
+
 def on_click(event):
 
-    global player_turn, player_selected_tile, player_selected_letter, word, letter, player1, player2, player3, player4, letter_id
+    global player_turn, letter_was_placed, word, letter, player1, player2, player3, player4, letter_id
 
-    tile_placed = False
-    player_letter_clicked = False
+    player_placed_tile_on_board = False
+    player_chose_tile_from_rack = False
     player_id = 0
 
-    #click inside the board
-    if player_selected_letter and board_x_start < event.x < board_x_start + board_width and board_y_start < event.y < board_y_start + board_height:
-        tile_placed = True
-        player_selected_letter = False
+    selected_row = (event.x - board_x_start) // cell_size
+    selected_col = (event.y - board_y_start) // cell_size
+
+    #player placed a letter onto the board
+    if not letter_was_placed and board_x_start < event.x < board_x_start + board_width and board_y_start < event.y < board_y_start + board_height:
+
+        if board[selected_col][selected_row] == '': #board tile was empty
+            player_placed_tile_on_board = True
+            letter_was_placed = True
 
         if player_turn == 1:
 
             if player1[letter_id] != '':
-                word += player1[letter_id]
+                word.append((player1[letter_id], selected_col, selected_row))
                 letter = player1[letter_id]
                 player1[letter_id] = ''
-            draw_ok_player1(True)
+            show_finish_option_player1(True)
 
         elif player_turn == 2:
 
             if player2[letter_id] != '':
-                word += player2[letter_id]
+                word.append((player2[letter_id], selected_col, selected_row))
                 letter = player2[letter_id]
                 player2[letter_id] = ''
-            draw_ok_player2(True)
+            show_finish_option_player2(True)
 
         elif player_turn == 3:
 
             if player3[letter_id] != '':
-                word += player3[letter_id]
+                word.append((player3[letter_id], selected_col, selected_row))
                 letter = player3[letter_id]
                 player3[letter_id] = ''
-            draw_ok_player3(True)
+            show_finish_option_player3(True)
 
         elif player_turn == 4:
 
             if player4[letter_id] != '':
-                word += player4[letter_id]
+                word.append((player4[letter_id], selected_col, selected_row))
                 letter = player4[letter_id]
                 player4[letter_id] = ''
-            draw_ok_player4(True)
+            show_finish_option_player4(True)
 
-    #click into player slot
 
-    if player_turn == 1 and board_x_start + 4 * cell_size < event.x < board_x_start +  11  * cell_size and board_y_start + board_height + cell_size < event.y < board_y_start + board_height + 2 * cell_size:
+    #player selected a letter from his rack
+    if   player_turn == 1 and board_x_start + 4 * cell_size < event.x < board_x_start +  11  * cell_size and board_y_start + board_height + cell_size < event.y < board_y_start + board_height + 2 * cell_size:
         player_id = 1
         letter_id = (event.x - board_x_start) // cell_size - 4
         if player1[letter_id] != '':
-            player_letter_clicked = True
-            player_selected_letter = True
+            player_chose_tile_from_rack = True
+            letter_was_placed = False
 
     elif player_turn == 2 and  board_x_start + board_width + cell_size < event.x < board_x_start + board_width + 2 * cell_size and board_y_start + 4 * cell_size < event.y < board_y_start + 11 * cell_size:
         player_id = 2
         letter_id = (event.y - board_y_start) // cell_size - 4
         if player2[letter_id] != '':
-            player_letter_clicked = True
-            player_selected_letter = True
+            player_chose_tile_from_rack = True
+            letter_was_placed = False
 
-    elif  player_turn == 3 and board_x_start + 4 * cell_size < event.x < board_x_start +  11  * cell_size and board_y_start - 2 * cell_size  < event.y < board_y_start - cell_size:
+    elif player_turn == 3 and board_x_start + 4 * cell_size < event.x < board_x_start +  11  * cell_size and board_y_start - 2 * cell_size  < event.y < board_y_start - cell_size:
         player_id = 3
         letter_id = (event.x - board_x_start) // cell_size - 4
         if player3[letter_id] != '':
-            player_letter_clicked = True
-            player_selected_letter = True
+            player_chose_tile_from_rack = True
+            letter_was_placed = False
 
     elif player_turn == 4 and board_x_start - 2 * cell_size < event.x < board_x_start - cell_size and board_y_start + 4 * cell_size < event.y < board_y_start + 11 * cell_size:
         player_id = 4
         letter_id = (event.y - board_y_start) // cell_size - 4
         if player4[letter_id] != '':
-            player_letter_clicked = True
-            player_selected_letter = True
-
-    selected_row = (event.x - board_x_start) // cell_size
-    selected_col = (event.y - board_y_start) // cell_size
+            player_chose_tile_from_rack = True
+            letter_was_placed = False
 
 
 
-    if player_turn == 1 and board_x_start + 12 * cell_size < event.x < board_x_start +  13 * cell_size and board_y_start + board_height + cell_size < event.y < board_y_start + board_height + 2 * cell_size:
+    if  player_turn == 1 and board_x_start + 12 * cell_size < event.x < board_x_start +  13 * cell_size and board_y_start + board_height + cell_size < event.y < board_y_start + board_height + 2 * cell_size:
         player_turn = 2
-        print(f"Player 1 a scris cuvantul: --{word}--\n")
-        word=""
-        draw_ok_player1(False)
-        fill_with_tiles(player1)
+        show_finish_option_player1(False)
+        take_tiles_from_bag_after_word(player1)
         draw_players_board()
 
+        get_word_direction(word)
+        word = sorted(word, key=lambda e: [e[1], e[2]])
+        get_crossed_words(word)
+        word.clear()
 
     elif player_turn == 2 and  board_x_start + board_width + cell_size < event.x <  board_x_start + board_width + 2 * cell_size and board_y_start + 12 * cell_size < event.y < board_y_start + 13 * cell_size:
         player_turn = 3
-        print(f"Player 2 a scris cuvantul: --{word}--\n")
-        word = ""
-        draw_ok_player2(False)
-        fill_with_tiles(player2)
+        show_finish_option_player2(False)
+        take_tiles_from_bag_after_word(player2)
         draw_players_board()
 
+        get_word_direction(word)
+        word = sorted(word, key=lambda e: [e[1], e[2]])
+        get_crossed_words(word)
+        word.clear()
 
-    if player_turn == 3 and board_x_start + 12 * cell_size < event.x < board_x_start +  13 * cell_size and board_y_start - 2 * cell_size < event.y < board_y_start - cell_size:
+    elif player_turn == 3 and board_x_start + 12 * cell_size < event.x < board_x_start +  13 * cell_size and board_y_start - 2 * cell_size < event.y < board_y_start - cell_size:
         player_turn = 4
-        print(f"Player 3 a scris cuvantul: --{word}--\n")
-        word = ""
-        draw_ok_player3(False)
-        fill_with_tiles(player3)
+        show_finish_option_player3(False)
+        take_tiles_from_bag_after_word(player3)
         draw_players_board()
 
+        get_word_direction(word)
+        word = sorted(word, key=lambda e: [e[1], e[2]])
+        get_crossed_words(word)
+        word.clear()
 
     elif player_turn == 4 and  board_x_start - 2 * cell_size < event.x <  board_x_start - cell_size and board_y_start + 12 * cell_size < event.y < board_y_start + 13 * cell_size:
         player_turn = 1
-        print(f"Player 4 a scris cuvantul: --{word}--\n")
-        word = ""
-        draw_ok_player4(False)
-        fill_with_tiles(player4)
+        show_finish_option_player4(False)
+        take_tiles_from_bag_after_word(player4)
         draw_players_board()
 
+        get_word_direction(word)
+        word = sorted(word, key=lambda e: [e[1], e[2]])
+        get_crossed_words(word)
+        word.clear()
 
-    if tile_placed:
-        choose_a_tile(selected_row, selected_col, letter)
-        print("am pus o litera pe tabla de joc")
+    #player placed a letter on board -> draw his decision
+    if player_placed_tile_on_board:
+        paint(selected_row, selected_col, letter)
+        board[selected_col][selected_row] = letter
 
-    if player_letter_clicked:
-        choose_a_tile(selected_row, selected_col, '_')
+    #player selected a letter from rack -> draw his decision
+    if player_chose_tile_from_rack:
+        paint(selected_row, selected_col, '_')
         print(f"Player cu id: {player_id} a apasat pe litera {letter_id}")
 
-def draw_ok_player1(draw):
+
+def show_finish_option_player1(draw):
 
     if draw:
         canvas.create_rectangle(board_x_start + 12 * cell_size,
@@ -318,7 +401,7 @@ def draw_ok_player1(draw):
                                 board_x_start + 13 * cell_size,
                                 board_y_start + board_height + cell_size,
                                 fill="lightgray", outline="lightgray", width=line_weight)
-def draw_ok_player2(draw):
+def show_finish_option_player2(draw):
     if draw:
         canvas.create_rectangle(board_x_start + board_width + cell_size,
                                 board_y_start + 12 * cell_size,
@@ -335,7 +418,7 @@ def draw_ok_player2(draw):
                                 board_x_start + board_width + 2 * cell_size,
                                 board_y_start + 13 * cell_size,
                                 fill="lightgray", outline="lightgray", width=line_weight)
-def draw_ok_player3(draw):
+def show_finish_option_player3(draw):
 
     if draw:
         canvas.create_rectangle(board_x_start + 12 * cell_size,
@@ -352,7 +435,7 @@ def draw_ok_player3(draw):
                                 board_x_start + 13 * cell_size,
                                 board_y_start - 2 * cell_size,
                                 fill="lightgray", outline="lightgray", width=line_weight)
-def draw_ok_player4(draw):
+def show_finish_option_player4(draw):
     if draw:
         canvas.create_rectangle(board_x_start - 2 * cell_size,
                                 board_y_start + 12 * cell_size,
@@ -370,6 +453,45 @@ def draw_ok_player4(draw):
                                 board_y_start + 13 * cell_size,
                                 fill="lightgray", outline="lightgray", width=line_weight)
 
+def show_turn_player1():
+
+    # vector_x_start = board_x_start + 4 * cell_size
+    # vector_y_start = board_y_start + board_height + cell_size
+    #
+    # triangle_base_start_x = vector_x_start + 3 * cell_size
+    # triangle_base_end_x = vector_x_start + 4 * cell_size
+    # triangle_top_x = vector_x_start + 3.5 * cell_size
+    #
+    # triangle_base_y = board_y_start + board_height + 10 + 2 * cell_size
+    # triangle_top_y = triangle_base_y + 20  # Height of the triangle
+    #
+    # canvas.create_polygon(
+    #     triangle_base_start_x, triangle_top_y,  # Left base point
+    #     triangle_base_end_x, triangle_top_y,  # Right base point
+    #     triangle_top_x, triangle_base_y,  # Top point
+    #     fill="red", outline="black", width=1
+    # )
+
+def show_turn_player2():
+    #
+    # vector_x_start = board_x_start + 4 * cell_size
+    # vector_y_start = board_y_start + board_height + cell_size
+    #
+    # triangle_base_start_y = vector_y_start + 3 * cell_size
+    # triangle_base_end_y = vector_y_start + 4 * cell_size
+    # triangle_top_y = vector_y_start + 3.5 * cell_size
+    #
+    # triangle_base_x = board_x_start + board_width + 10
+    # triangle_top_x = triangle_base_x - 20
+    #
+    # canvas.create_polygon(
+    #     triangle_top_x, triangle_base_start_y,
+    #     triangle_base_x, triangle_base_start_y,
+    #     triangle_base_x, triangle_base_end_y,
+    #     fill="red", outline="black", width=1
+    # ) TO DO
+
+
 window = tk.Tk()
 window.title("Radu's Scrabble")
 
@@ -385,6 +507,7 @@ canvas.pack()
 
 draw_scrabble_board()
 draw_players_board()
+show_turn_player2()
 
 canvas.bind(click, on_click)
 window.mainloop()
