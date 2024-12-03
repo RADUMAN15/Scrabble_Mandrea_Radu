@@ -5,6 +5,8 @@ cell_size = 50
 
 line_weight = 4
 click = "<Button-1>"
+tile_fill = "#fae4c3"
+padding = 4
 
 colors = {
     "TC": "#ff6e6e",
@@ -30,6 +32,13 @@ scrabble_letters = {
     'H': 1, 'I': 10, 'J': 1, 'K': 1, 'L': 4, 'M': 3, 'N': 5,
     'O': 8, 'P': 4, 'Q': 0, 'R': 5, 'S': 5, 'T': 7, 'U': 6,
     'V': 2, 'W': 0, 'X': 1, 'Y': 0, 'Z': 1
+}
+
+scrabble_points = {
+    'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
+    'H': 4, 'I': 1, 'J': 8, 'K': 5, 'L': 1, 'M': 3, 'N': 1,
+    'O': 1, 'P': 3, 'Q': 10, 'R': 1, 'S': 1, 'T': 1, 'U': 1,
+    'V': 4, 'W': 4, 'X': 8, 'Y': 4, 'Z': 10
 }
 
 
@@ -112,10 +121,16 @@ def draw_players_board():
         y2 = y1 + cell_size
 
         canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
+        canvas.create_rectangle(x1+padding, y1+padding, x2-padding, y2-padding, fill=tile_fill, outline="black", width=line_weight - 2)
+
         if player1[i] != '':
             canvas.create_text(x1 + cell_size / 2,
                                y1 + cell_size / 2,
-                               text=player1[i], font=("Arial Black", 10, "bold"), fill="black")
+                               text=player1[i], font=("Arial Black", 14, "bold"), fill="black")
+
+            canvas.create_text(x2 - 12.5,
+                               y2 - 12.5,
+                               text=scrabble_points[player1[i]], font=("Arial Black", 10, "bold"), fill="black")
 
     vector_x_start = board_x_start + 4 * cell_size
     vector_y_start = board_y_start - cell_size - cell_size
@@ -128,10 +143,16 @@ def draw_players_board():
         y2 = y1 + cell_size
 
         canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
+        canvas.create_rectangle(x1+padding, y1+padding, x2-padding, y2-padding, fill=tile_fill, outline="black", width=line_weight - 2)
+
         if player3[i] != '':
             canvas.create_text(x1 + cell_size / 2,
                                y1 + cell_size / 2,
-                               text=player3[i], font=("Arial Black", 10, "bold"), fill="black")
+                               text=player3[i], font=("Arial Black", 14, "bold"), fill="black")
+
+            canvas.create_text(x2 - 12.5,
+                               y2 - 12.5,
+                               text=scrabble_points[player3[i]], font=("Arial Black", 10, "bold"), fill="black")
 
     vector_x_start = board_x_start + board_width + cell_size
     vector_y_start = board_y_start + 4 * cell_size
@@ -144,10 +165,16 @@ def draw_players_board():
         y2 = y1 + cell_size
 
         canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
+        canvas.create_rectangle(x1+padding, y1+padding, x2-padding, y2-padding, fill=tile_fill, outline="black", width=line_weight - 2)
+
         if player2[i] != '':
             canvas.create_text(x1 + cell_size / 2,
                                y1 + cell_size / 2,
-                               text=player2[i], font=("Arial Black", 10, "bold"), fill="black")
+                               text=player2[i], font=("Arial Black", 14, "bold"), fill="black")
+
+            canvas.create_text(x2 - 12.5,
+                               y2 - 12.5,
+                               text=scrabble_points[player2[i]], font=("Arial Black", 10, "bold"), fill="black")
 
     vector_x_start = board_x_start - cell_size - cell_size
     vector_y_start = board_y_start + 4 * cell_size
@@ -160,10 +187,16 @@ def draw_players_board():
         y2 = y1 + cell_size
 
         canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
+        canvas.create_rectangle(x1+padding, y1+padding, x2-padding, y2-padding, fill=tile_fill, outline="black", width=line_weight - 2)
+
         if player4[i] != '':
             canvas.create_text(x1 + cell_size / 2,
                                y1 + cell_size / 2,
-                               text=player4[i], font=("Arial Black", 10, "bold"), fill="black")
+                               text=player4[i], font=("Arial Black", 14, "bold"), fill="black")
+
+            canvas.create_text(x2 - 12.5,
+                               y2 - 12.5,
+                               text=scrabble_points[player4[i]], font=("Arial Black", 10, "bold"), fill="black")
 
 def clean_word_from_board(_wrd, player):
 
@@ -182,7 +215,7 @@ def paint(col, row, _letter):
     x2 = x1 + cell_size
     y2 = y1 + cell_size
 
-    canvas.create_rectangle(x1 + 5.5, y1 + 5.5, x2 - 5.5, y2 - 5.5, fill="white", outline="black", width=line_weight - 2)
+    canvas.create_rectangle(x1 + padding, y1 + padding, x2 - padding, y2 - padding, fill=tile_fill, outline="black", width=line_weight - 2)
 
     if _letter == '_':
         canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
@@ -191,6 +224,10 @@ def paint(col, row, _letter):
         canvas.create_text(x1 + cell_size / 2,
                            y1 + cell_size / 2,
                            text=_letter, font=("Arial Black", 14, "bold"), fill="black")
+
+        canvas.create_text(x2 - 12.5,
+                           y2 - 12.5,
+                           text=scrabble_points[_letter], font=("Arial Black", 10, "bold"), fill="black")
 
     if _letter == "default":
 
@@ -296,7 +333,7 @@ def on_click(event):
             player_placed_tile_on_board = True
             letter_was_placed = True
 
-        if player_turn == 1:
+        if player_turn == 1 and player_placed_tile_on_board:
 
             if player1[letter_id] != '':
                 word.append((player1[letter_id], selected_col, selected_row))
@@ -304,7 +341,7 @@ def on_click(event):
                 player1[letter_id] = ''
             show_finish_option_player1(True)
 
-        elif player_turn == 2:
+        elif player_turn == 2 and player_placed_tile_on_board:
 
             if player2[letter_id] != '':
                 word.append((player2[letter_id], selected_col, selected_row))
@@ -312,7 +349,7 @@ def on_click(event):
                 player2[letter_id] = ''
             show_finish_option_player2(True)
 
-        elif player_turn == 3:
+        elif player_turn == 3 and player_placed_tile_on_board:
 
             if player3[letter_id] != '':
                 word.append((player3[letter_id], selected_col, selected_row))
@@ -320,7 +357,7 @@ def on_click(event):
                 player3[letter_id] = ''
             show_finish_option_player3(True)
 
-        elif player_turn == 4:
+        elif player_turn == 4 and player_placed_tile_on_board:
 
             if player4[letter_id] != '':
                 word.append((player4[letter_id], selected_col, selected_row))
@@ -407,6 +444,7 @@ def on_click(event):
         get_crossed_words(word)
         word.clear()
         show_turn_player1()
+
 
     #player pressed reset my word
     if   player_turn == 1 and board_x_start + 14 * cell_size < event.x < board_x_start +  15 * cell_size and board_y_start + board_height + cell_size < event.y < board_y_start + board_height + 2 * cell_size:
@@ -610,6 +648,7 @@ def show_turn_player4():
     canvas_player_turns[3] = canvas.create_text(vector_x_start, vector_y_start + 3.5 * cell_size, text="🢂\n" + player4_name + "🢂", font=("Arial Black", 15, "bold"), fill="black")
 
 window = tk.Tk()
+window.state("zoomed")
 window.title("Radu's Scrabble")
 
 screen_width = window.winfo_screenwidth()
@@ -625,7 +664,6 @@ canvas.pack()
 draw_scrabble_board()
 draw_players_board()
 show_turn_player1()
-
 
 canvas.bind(click, on_click)
 window.mainloop()
