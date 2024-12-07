@@ -1,7 +1,11 @@
 import tkinter as tk
 import random
 board_size = 15
-cell_size = 50
+cell_size = 50 #50 monitor 42 laptop
+letter_font_size = 14 #14 monitor 12 laptop
+digit_font_size = 10 #10 monitor 8 laptop
+num_of_tiles_at_start = 7
+num_of_players = 2
 
 line_weight = 4
 click = "<Button-1>"
@@ -14,7 +18,7 @@ colors = {
     "TL": "#0373fc",
     "DL": "#d4ccff",
     " ": "#79b58f",
-    "START": "#ffff70"
+    "GO": "#ffff70"
 }
 special_tiles = {
     "TC": [(0, 0), (0, 7), (0, 14), (7, 0), (7, 14), (14, 0), (14, 7), (14, 14)],
@@ -25,15 +29,20 @@ special_tiles = {
     "DL": [(0, 3), (0, 11), (2, 6), (2, 8), (3, 0), (3, 7), (3, 14),
            (6, 2), (6, 6), (6, 8), (6, 12), (7, 3), (7, 11), (8, 2), (8, 6),
            (8, 8), (8, 12), (11, 0), (11, 7), (11, 14), (12, 6), (12, 8), (14, 3), (14, 11)],
-    "START": [(7,7)]
+    "GO": [(7,7)]
 }
+# scrabble_letters = {
+#     'A': 11, 'B': 2, 'C': 2, 'D': 5, 'E': 11, 'F': 1, 'G': 2,
+#     'H': 1, 'I': 10, 'J': 1, 'K': 1, 'L': 4, 'M': 3, 'N': 5,
+#     'O': 8, 'P': 4, 'Q': 0, 'R': 5, 'S': 5, 'T': 7, 'U': 6,
+#     'V': 2, 'W': 0, 'X': 1, 'Y': 0, 'Z': 1
+# }
 scrabble_letters = {
-    'A': 11, 'B': 2, 'C': 2, 'D': 5, 'E': 11, 'F': 1, 'G': 2,
-    'H': 1, 'I': 10, 'J': 1, 'K': 1, 'L': 4, 'M': 3, 'N': 5,
-    'O': 8, 'P': 4, 'Q': 0, 'R': 5, 'S': 5, 'T': 7, 'U': 6,
-    'V': 2, 'W': 0, 'X': 1, 'Y': 0, 'Z': 1
+    'A': 5, 'B': 1, 'C': 1, 'D': 2, 'E': 5, 'F': 0, 'G': 1,
+    'H': 0, 'I': 5, 'J': 0, 'K': 0, 'L': 2, 'M': 1, 'N': 2,
+    'O': 4, 'P': 2, 'Q': 0, 'R': 2, 'S': 2, 'T': 3, 'U': 3,
+    'V': 1, 'W': 0, 'X': 0, 'Y': 0, 'Z': 0
 }
-
 scrabble_points = {
     'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
     'H': 4, 'I': 1, 'J': 8, 'K': 5, 'L': 1, 'M': 3, 'N': 1,
@@ -44,37 +53,54 @@ scrabble_points = {
 
 canvas_player_turns = [0, 0, 0, 0]
 
-
 scrabble_list = [letter for letter, count in scrabble_letters.items() for _ in range(count)]
 
-def take_tiles_from_bag_at_start(num_tiles=7):
+def take_tiles_from_bag_at_start(num_tiles=num_of_tiles_at_start):
     global scrabble_list
-    drawn_tiles = random.sample(scrabble_list, num_tiles)
+    drawn_tiles = random.sample(scrabble_list, min(num_tiles, len(scrabble_list)))
     for tile in drawn_tiles:
         scrabble_list.remove(tile)
     return drawn_tiles
+
 def take_tiles_from_bag_after_word(player):
 
     missing = sum(1 for tile in player if tile == '')
 
-    drawn_tiles = random.sample(scrabble_list, missing)
+    drawn_tiles = random.sample(scrabble_list,  min(missing, len(scrabble_list)))
 
     for tile in drawn_tiles:
         scrabble_list.remove(tile)
 
     for i in range(len(player)):
-        if player[i] == '':
+        if player[i] == '' and len(drawn_tiles) > 0:
             player[i] = drawn_tiles.pop(0)
+
 
 player1 = take_tiles_from_bag_at_start()
 player2 = take_tiles_from_bag_at_start()
-player3 = take_tiles_from_bag_at_start()
-player4 = take_tiles_from_bag_at_start()
+if num_of_players > 2:
+    player3 = take_tiles_from_bag_at_start()
+if num_of_players > 3:
+    player4 = take_tiles_from_bag_at_start()
 
 player1_name = "BIA"
 player2_name = "R\nA\nD\nU\n"
 player3_name = "DARIA"
 player4_name = "G\nD\nT\n"
+
+player1_score = 0
+player2_score = 0
+player3_score = 0
+player4_score = 0
+
+score = player1_name + ": " + str(player1_score) + " puncte\n" + player2_name.replace("\n","") + ": " + str(player2_score) + " puncte\n"
+if num_of_players > 2:
+    score += player3_name.replace("\n","") + ": " + str(player3_score) + " puncte\n"
+
+if num_of_players > 3:
+    score +=player4_name.replace("\n","") + ": " + str(player4_score) + " puncte\n"
+
+legend = "Aici apar cuvintele formate\nsi scorul acestora!"
 
 player_turn = 1
 letter_was_placed = True
@@ -83,6 +109,17 @@ board = [['' for _ in range(15)] for _ in range(15)]
 word = []
 letter = ""
 letter_id = 0
+
+permitted_words = []
+try:
+
+    with open("words.txt", 'r') as file:
+        for line in file:
+            permitted_words.append(line.replace('\n',''))
+
+except FileNotFoundError:
+    print("MISSING WORDS LIST")
+
 
 def get_cell_type(row, col):
     for tile, positions in special_tiles.items():
@@ -106,7 +143,7 @@ def draw_scrabble_board():
             canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="black", width=line_weight)
 
             if cell_type != " ":
-                canvas.create_text(x1 + cell_size / 2, y1 + cell_size / 2, text=cell_type, font=("Arial Black", 10, "bold"), fill="black")
+                canvas.create_text(x1 + cell_size / 2, y1 + cell_size / 2, text=cell_type, font=("Arial Black", digit_font_size, "bold"), fill="black")
 
 def draw_players_board():
 
@@ -114,7 +151,7 @@ def draw_players_board():
     vector_y_start = board_y_start + board_height + cell_size
 
     # down player 1
-    for i in range(7):
+    for i in range(num_of_tiles_at_start):
         x1 = vector_x_start + i * cell_size
         y1 = vector_y_start
         x2 = x1 + cell_size
@@ -126,39 +163,44 @@ def draw_players_board():
         if player1[i] != '':
             canvas.create_text(x1 + cell_size / 2,
                                y1 + cell_size / 2,
-                               text=player1[i], font=("Arial Black", 14, "bold"), fill="black")
+                               text=player1[i], font=("Arial Black", letter_font_size, "bold"), fill="black")
 
             canvas.create_text(x2 - 12.5,
                                y2 - 12.5,
-                               text=scrabble_points[player1[i]], font=("Arial Black", 10, "bold"), fill="black")
+                               text=scrabble_points[player1[i]], font=("Arial Black", digit_font_size, "bold"), fill="black")
+        else:
+            canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
 
     vector_x_start = board_x_start + 4 * cell_size
     vector_y_start = board_y_start - cell_size - cell_size
 
     # up player 3
-    for i in range(7):
-        x1 = vector_x_start + i * cell_size
-        y1 = vector_y_start
-        x2 = x1 + cell_size
-        y2 = y1 + cell_size
+    if num_of_players > 2:
+        for i in range(num_of_tiles_at_start):
+            x1 = vector_x_start + i * cell_size
+            y1 = vector_y_start
+            x2 = x1 + cell_size
+            y2 = y1 + cell_size
 
-        canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
-        canvas.create_rectangle(x1+padding, y1+padding, x2-padding, y2-padding, fill=tile_fill, outline="black", width=line_weight - 2)
+            canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
+            canvas.create_rectangle(x1+padding, y1+padding, x2-padding, y2-padding, fill=tile_fill, outline="black", width=line_weight - 2)
 
-        if player3[i] != '':
-            canvas.create_text(x1 + cell_size / 2,
-                               y1 + cell_size / 2,
-                               text=player3[i], font=("Arial Black", 14, "bold"), fill="black")
+            if player3[i] != '':
+                canvas.create_text(x1 + cell_size / 2,
+                                   y1 + cell_size / 2,
+                                   text=player3[i], font=("Arial Black", letter_font_size, "bold"), fill="black")
 
-            canvas.create_text(x2 - 12.5,
-                               y2 - 12.5,
-                               text=scrabble_points[player3[i]], font=("Arial Black", 10, "bold"), fill="black")
+                canvas.create_text(x2 - 12.5,
+                                   y2 - 12.5,
+                                   text=scrabble_points[player3[i]], font=("Arial Black", digit_font_size, "bold"), fill="black")
+            else:
+                canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
 
     vector_x_start = board_x_start + board_width + cell_size
     vector_y_start = board_y_start + 4 * cell_size
 
     # right player 2
-    for i in range(7):
+    for i in range(num_of_tiles_at_start):
         x1 = vector_x_start
         y1 = vector_y_start + i * cell_size
         x2 = x1 + cell_size
@@ -170,40 +212,67 @@ def draw_players_board():
         if player2[i] != '':
             canvas.create_text(x1 + cell_size / 2,
                                y1 + cell_size / 2,
-                               text=player2[i], font=("Arial Black", 14, "bold"), fill="black")
+                               text=player2[i], font=("Arial Black", letter_font_size, "bold"), fill="black")
 
             canvas.create_text(x2 - 12.5,
                                y2 - 12.5,
-                               text=scrabble_points[player2[i]], font=("Arial Black", 10, "bold"), fill="black")
+                               text=scrabble_points[player2[i]], font=("Arial Black", digit_font_size, "bold"), fill="black")
+        else:
+            canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
 
     vector_x_start = board_x_start - cell_size - cell_size
     vector_y_start = board_y_start + 4 * cell_size
 
     # left player 4
-    for i in range(7):
-        x1 = vector_x_start
-        y1 = vector_y_start + i * cell_size
-        x2 = x1 + cell_size
-        y2 = y1 + cell_size
+    if num_of_players > 3:
+        for i in range(num_of_tiles_at_start):
+            x1 = vector_x_start
+            y1 = vector_y_start + i * cell_size
+            x2 = x1 + cell_size
+            y2 = y1 + cell_size
 
-        canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
-        canvas.create_rectangle(x1+padding, y1+padding, x2-padding, y2-padding, fill=tile_fill, outline="black", width=line_weight - 2)
+            canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
+            canvas.create_rectangle(x1+padding, y1+padding, x2-padding, y2-padding, fill=tile_fill, outline="black", width=line_weight - 2)
 
-        if player4[i] != '':
-            canvas.create_text(x1 + cell_size / 2,
-                               y1 + cell_size / 2,
-                               text=player4[i], font=("Arial Black", 14, "bold"), fill="black")
+            if player4[i] != '':
+                canvas.create_text(x1 + cell_size / 2,
+                                   y1 + cell_size / 2,
+                                   text=player4[i], font=("Arial Black", letter_font_size, "bold"), fill="black")
 
-            canvas.create_text(x2 - 12.5,
-                               y2 - 12.5,
-                               text=scrabble_points[player4[i]], font=("Arial Black", 10, "bold"), fill="black")
+                canvas.create_text(x2 - 12.5,
+                                   y2 - 12.5,
+                                   text=scrabble_points[player4[i]], font=("Arial Black", digit_font_size, "bold"), fill="black")
+
+            else:
+                canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
+
+def paint_score():
+
+    global score, canvas_score
+    p1n = player1_name.replace("\n", "")
+    p2n = player2_name.replace("\n", "")
+    p3n = player3_name.replace("\n", "")
+    p4n = player4_name.replace("\n", "")
+
+    score = ""
+
+    score += p1n + " : " + str(player1_score) + " puncte\n"
+    score += p2n + " : " + str(player2_score) + " puncte\n"
+    if num_of_players > 2:
+        score += p3n + " : " + str(player3_score) + " puncte\n"
+    if num_of_players > 3:
+        score += p4n + " : " + str( player4_score) + " puncte\n"
+
+    if canvas_score:
+        canvas.delete(canvas_score)
+    canvas_score = canvas.create_text(screen_width - 200, 100, text = score, font=("Arial Black", digit_font_size + 8, ""), fill="black")
 
 def clean_word_from_board(_wrd, player):
 
     for (l, c, r) in _wrd:
         board[c][r] = ''
         paint(r, c, "default")
-        for i in range(7):
+        for i in range(num_of_tiles_at_start):
             if player[i] == '':
                 player[i] = l
                 break
@@ -223,11 +292,11 @@ def paint(col, row, _letter):
     if _letter != '' and _letter != '_' and _letter != 'default':
         canvas.create_text(x1 + cell_size / 2,
                            y1 + cell_size / 2,
-                           text=_letter, font=("Arial Black", 14, "bold"), fill="black")
+                           text=_letter, font=("Arial Black", letter_font_size, "bold"), fill="black")
 
         canvas.create_text(x2 - 12.5,
                            y2 - 12.5,
-                           text=scrabble_points[_letter], font=("Arial Black", 10, "bold"), fill="black")
+                           text=scrabble_points[_letter], font=("Arial Black", digit_font_size, "bold"), fill="black")
 
     if _letter == "default":
 
@@ -238,22 +307,11 @@ def paint(col, row, _letter):
 
         canvas.create_text(x1 + cell_size / 2,
                            y1 + cell_size / 2,
-                           text=get_cell_type(row, col), font=("Arial Black", 10, "bold"), fill="black")
-
+                           text=get_cell_type(row, col), font=("Arial Black", digit_font_size, "bold"), fill="black")
 
 def get_crossed_words(wrd: [(str, int, int)]):
 
     initial = wrd.copy()
-
-    # #caut literelel
-    # d = [(0,1), (1,0), (0,-1), (-1,0)]
-    # for i in range(len(wrd)):
-    #     (_, line, col) = wrd[i]
-    #     for j in range(4):
-    #         if  0 <= line + d[j][0] <= 15 and 0 <= col + d[j][1] <= 15 and board[line + d[j][0]][col + d[j][1]] != '':
-    #             if (board[line + d[j][0]][col + d[j][1]], line + d[j][0], col + d[j][1]) not in wrd:
-    #                 wrd.append((board[line + d[j][0]][col + d[j][1]], line + d[j][0], col + d[j][1]))
-
 
     board_words = []
 
@@ -282,45 +340,73 @@ def get_crossed_words(wrd: [(str, int, int)]):
             board_words.append(new_word.copy())
 
     filtered_words = []
-    for word in board_words:
+    for board_word in board_words:
         in_selected_letter = False
-        for letter in word:
+        for letter in board_word:
             if letter in initial:
                 in_selected_letter = True
                 break
 
         if in_selected_letter:
-            filtered_words.append(word)
+            filtered_words.append(board_word)
 
     print(f"Cuvinte formate: {filtered_words}")
+    return filtered_words
 
-def get_word_direction(wrd: [(str, int, int)]):
-    is_line_constant = True
-    is_column_constant = True
+def get_score(word_list):
 
-    for i in range(len(wrd) - 1):
-        (_, line_old, col_old) = wrd[i]
-        (_, line_new, col_new) = wrd[i + 1]
+    global legend, canvas_words
 
-        if line_old != line_new:
-            is_line_constant = False
-        if col_old != col_new:
-            is_column_constant = False
+    legend = "CUVINTE FORMATE\n"
+    canvas.delete(canvas_words)
+    fs = 0
+    double_w = False
+    triple_w = False
 
-    if is_line_constant:
-        return "H"
-    elif is_column_constant:
-        return "V"
+    for _word in word_list:
+        s = 0
+        chained_letters = ""
+        for l, r, c in _word:
 
-    return "U" # the letters were placed wrong
+            cell_type = get_cell_type(r,c)
+            letter_score = scrabble_points[l]
+
+            if cell_type == "DL":
+                letter_score *= 2
+            elif cell_type == "TL":
+                letter_score *= 3
+
+            elif cell_type == "DC":
+                double_w = True
+            elif cell_type == "TC":
+                triple_w = True
+
+            s += letter_score
+            chained_letters += l.lower()
+
+        if chained_letters not in permitted_words:
+            legend = "Cuvantul \"" +  chained_letters.upper() + "\" NU\neste in dictionar!\nFii mai atent!\nTrecem la urmatorul jucator!"
+            fs = 0
+            break
+
+        if double_w:
+            s *= 2
+        elif triple_w:
+            s *= 3
+
+        fs += s
+        legend += " ● " + chained_letters.upper() + " : " + str(s) + "\n"
+
+
+    canvas_words = canvas.create_text(screen_width - 200, screen_height - 200, text=legend, font=("Arial Black", digit_font_size + 8, ""), fill="black")
+    return fs
 
 def on_click(event):
 
-    global player_turn, letter_was_placed, word, letter, player1, player2, player3, player4, letter_id, board
+    global player_turn, letter_was_placed, word, letter, player1, player2, player3, player4, letter_id, board, player1_score, player2_score, player3_score, player4_score
 
     player_placed_tile_on_board = False
     player_chose_tile_from_rack = False
-    player_id = 0
 
     selected_row = (event.x - board_x_start) // cell_size
     selected_col = (event.y - board_y_start) // cell_size
@@ -368,28 +454,24 @@ def on_click(event):
 
     #player selected a letter from his rack
     if   player_turn == 1 and board_x_start + 4 * cell_size < event.x < board_x_start +  11  * cell_size and board_y_start + board_height + cell_size < event.y < board_y_start + board_height + 2 * cell_size:
-        player_id = 1
         letter_id = (event.x - board_x_start) // cell_size - 4
         if player1[letter_id] != '':
             player_chose_tile_from_rack = True
             letter_was_placed = False
 
     elif player_turn == 2 and  board_x_start + board_width + cell_size < event.x < board_x_start + board_width + 2 * cell_size and board_y_start + 4 * cell_size < event.y < board_y_start + 11 * cell_size:
-        player_id = 2
         letter_id = (event.y - board_y_start) // cell_size - 4
         if player2[letter_id] != '':
             player_chose_tile_from_rack = True
             letter_was_placed = False
 
     elif player_turn == 3 and board_x_start + 4 * cell_size < event.x < board_x_start +  11  * cell_size and board_y_start - 2 * cell_size  < event.y < board_y_start - cell_size:
-        player_id = 3
         letter_id = (event.x - board_x_start) // cell_size - 4
         if player3[letter_id] != '':
             player_chose_tile_from_rack = True
             letter_was_placed = False
 
     elif player_turn == 4 and board_x_start - 2 * cell_size < event.x < board_x_start - cell_size and board_y_start + 4 * cell_size < event.y < board_y_start + 11 * cell_size:
-        player_id = 4
         letter_id = (event.y - board_y_start) // cell_size - 4
         if player4[letter_id] != '':
             player_chose_tile_from_rack = True
@@ -398,53 +480,74 @@ def on_click(event):
 
     #player pressed check my word
     if   player_turn == 1 and board_x_start + 12 * cell_size < event.x < board_x_start +  13 * cell_size and board_y_start + board_height + cell_size < event.y < board_y_start + board_height + 2 * cell_size:
-        player_turn = 2
+        player_turn = 1 + player_turn % num_of_players
         show_finish_option_player1(False)
-        take_tiles_from_bag_after_word(player1)
-        draw_players_board()
 
-        get_word_direction(word)
         word = sorted(word, key=lambda e: [e[1], e[2]])
-        get_crossed_words(word)
+        sc = get_score(get_crossed_words(word))
+        if sc != 0:
+            take_tiles_from_bag_after_word(player1)
+            player1_score += sc
+        else:
+            clean_word_from_board(word, player1)
+
         word.clear()
+        draw_players_board()
         show_turn_player2()
 
     elif player_turn == 2 and board_x_start + board_width + cell_size < event.x <  board_x_start + board_width + 2 * cell_size and board_y_start + 12 * cell_size < event.y < board_y_start + 13 * cell_size:
-        player_turn = 3
+        player_turn = 1 + player_turn % num_of_players
         show_finish_option_player2(False)
-        take_tiles_from_bag_after_word(player2)
-        draw_players_board()
 
-        get_word_direction(word)
         word = sorted(word, key=lambda e: [e[1], e[2]])
-        get_crossed_words(word)
+        sc = get_score(get_crossed_words(word))
+        if sc != 0:
+            take_tiles_from_bag_after_word(player2)
+            player2_score += sc
+        else:
+            clean_word_from_board(word, player2)
+
         word.clear()
-        show_turn_player3()
+        draw_players_board()
+        if num_of_players > 2:
+            show_turn_player3()
+        else:
+            show_turn_player1()
 
     elif player_turn == 3 and board_x_start + 12 * cell_size < event.x < board_x_start +  13 * cell_size and board_y_start - 2 * cell_size < event.y < board_y_start - cell_size:
-        player_turn = 4
+        player_turn = 1 + player_turn % num_of_players
         show_finish_option_player3(False)
-        take_tiles_from_bag_after_word(player3)
-        draw_players_board()
 
-        get_word_direction(word)
         word = sorted(word, key=lambda e: [e[1], e[2]])
-        get_crossed_words(word)
+        sc = get_score(get_crossed_words(word))
+        if sc != 0:
+            take_tiles_from_bag_after_word(player3)
+            player3_score += sc
+        else:
+            clean_word_from_board(word, player3)
+
         word.clear()
-        show_turn_player4()
+        draw_players_board()
+        if num_of_players > 3:
+            show_turn_player4()
+        else:
+            show_turn_player1()
 
     elif player_turn == 4 and board_x_start - 2 * cell_size < event.x <  board_x_start - cell_size and board_y_start + 12 * cell_size < event.y < board_y_start + 13 * cell_size:
-        player_turn = 1
+        player_turn = 1 + player_turn % num_of_players
         show_finish_option_player4(False)
-        take_tiles_from_bag_after_word(player4)
-        draw_players_board()
 
-        get_word_direction(word)
         word = sorted(word, key=lambda e: [e[1], e[2]])
-        get_crossed_words(word)
-        word.clear()
-        show_turn_player1()
+        sc = get_score(get_crossed_words(word))
+        if sc != 0:
+            take_tiles_from_bag_after_word(player4)
+            player4_score += sc
+        else:
+            clean_word_from_board(word, player4)
 
+        word.clear()
+        draw_players_board()
+        show_turn_player1()
 
     #player pressed reset my word
     if   player_turn == 1 and board_x_start + 14 * cell_size < event.x < board_x_start +  15 * cell_size and board_y_start + board_height + cell_size < event.y < board_y_start + board_height + 2 * cell_size:
@@ -476,6 +579,8 @@ def on_click(event):
     #player selected a letter from rack -> draw his decision
     if player_chose_tile_from_rack:
         paint(selected_row, selected_col, '_')
+
+    paint_score()
 
 def show_finish_option_player1(draw):
 
@@ -619,8 +724,12 @@ def show_turn_player1():
     vector_x_start = board_x_start + 4 * cell_size + 7 * cell_size // 2
     vector_y_start = board_y_start + board_height + cell_size
 
-    if canvas_player_turns[3]:
+    if num_of_players == 4 and canvas_player_turns[3]:
         canvas.delete(canvas_player_turns[3])
+    elif num_of_players == 3 and canvas_player_turns[2]:
+        canvas.delete(canvas_player_turns[2])
+    elif num_of_players == 2 and canvas_player_turns[1]:
+        canvas.delete(canvas_player_turns[1])
 
     canvas_player_turns[0] = canvas.create_text(vector_x_start, vector_y_start - cell_size//3, text="🢃 " + player1_name + " 🢃" ,  font=("Arial Black", 15, "bold"), fill="black")
 def show_turn_player2():
@@ -660,6 +769,9 @@ board_y_start = (screen_height - board_height) // 2
 
 canvas = tk.Canvas(window, width=screen_width, height=screen_height, bg="lightgray")
 canvas.pack()
+canvas_score = canvas.create_text(screen_width - 200, 100, text = score, font=("Arial Black", digit_font_size + 8, ""), fill="black")
+canvas_words = canvas.create_text(screen_width - 200, screen_height - 200, text = legend, font=("Arial Black", digit_font_size + 8, ""), fill="black")
+
 
 draw_scrabble_board()
 draw_players_board()
