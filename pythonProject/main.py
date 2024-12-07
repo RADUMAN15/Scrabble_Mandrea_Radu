@@ -1,13 +1,15 @@
 import tkinter as tk
 import random
+import sys
+
 board_size = 15
-cell_size = 50 #50 monitor 42 laptop
-letter_font_size = 14 #14 monitor 12 laptop
-digit_font_size = 10 #10 monitor 8 laptop
+cell_size = 50  #50 monitor 42 laptop
+letter_font_size = 14  #14 monitor 12 laptop
+digit_font_size = 10  #10 monitor 8 laptop
 num_of_tiles_at_start = 7
 num_of_players = 4
-
 line_weight = 4
+
 click = "<Button-1>"
 tile_fill = "#fae4c3"
 padding = 4
@@ -29,7 +31,7 @@ special_tiles = {
     "DL": [(0, 3), (0, 11), (2, 6), (2, 8), (3, 0), (3, 7), (3, 14),
            (6, 2), (6, 6), (6, 8), (6, 12), (7, 3), (7, 11), (8, 2), (8, 6),
            (8, 8), (8, 12), (11, 0), (11, 7), (11, 14), (12, 6), (12, 8), (14, 3), (14, 11)],
-    "GO": [(7,7)]
+    "GO": [(7, 7)]
 }
 scrabble_letters = {
     'A': 11, 'B': 2, 'C': 2, 'D': 5, 'E': 11, 'F': 1, 'G': 2,
@@ -37,13 +39,6 @@ scrabble_letters = {
     'O': 8, 'P': 4, 'Q': 0, 'R': 5, 'S': 5, 'T': 7, 'U': 6,
     'V': 2, 'W': 0, 'X': 1, 'Y': 0, 'Z': 1
 }
-
-# scrabble_letters = {
-#     'A': 5, 'B': 1, 'C': 1, 'D': 2, 'E': 5, 'F': 0, 'G': 1,
-#     'H': 0, 'I': 5, 'J': 0, 'K': 0, 'L': 2, 'M': 1, 'N': 2,
-#     'O': 4, 'P': 2, 'Q': 0, 'R': 2, 'S': 2, 'T': 3, 'U': 3,
-#     'V': 1, 'W': 0, 'X': 0, 'Y': 0, 'Z': 0
-# }
 scrabble_points = {
     'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
     'H': 4, 'I': 1, 'J': 8, 'K': 5, 'L': 1, 'M': 3, 'N': 1,
@@ -51,10 +46,10 @@ scrabble_points = {
     'V': 4, 'W': 4, 'X': 8, 'Y': 4, 'Z': 10
 }
 
-
 canvas_player_turns = [0, 0, 0, 0]
 
 scrabble_list = [letter for letter, count in scrabble_letters.items() for _ in range(count)]
+
 
 def take_tiles_from_bag_at_start(num_tiles=num_of_tiles_at_start):
     global scrabble_list
@@ -63,11 +58,11 @@ def take_tiles_from_bag_at_start(num_tiles=num_of_tiles_at_start):
         scrabble_list.remove(tile)
     return drawn_tiles
 
-def take_tiles_from_bag_after_word(player):
 
+def take_tiles_from_bag_after_word(player):
     missing = sum(1 for tile in player if tile == '')
 
-    drawn_tiles = random.sample(scrabble_list,  min(missing, len(scrabble_list)))
+    drawn_tiles = random.sample(scrabble_list, min(missing, len(scrabble_list)))
 
     for tile in drawn_tiles:
         scrabble_list.remove(tile)
@@ -76,32 +71,65 @@ def take_tiles_from_bag_after_word(player):
         if player[i] == '' and len(drawn_tiles) > 0:
             player[i] = drawn_tiles.pop(0)
 
+
 def check_player_bag_empty(player):
     has_at_least_one = False
     for letter in player:
         if letter != '':
             has_at_least_one = True
 
-    if has_at_least_one:
-        print("mai are piese")
-
     return (not has_at_least_one) and (len(scrabble_list) == 0)
 
-def game_over():
 
+def init():
+    global num_of_players
+    global player1_name, player2_name, player3_name, player4_name
+    global player1, player2, player3, player4
+    global score
+
+    num_of_players = len(sys.argv) - 1
+
+    if num_of_players < 2:
+        raise ValueError("Avem nevoie de cel putin 2 jucatori!")
+
+    player1_name = sys.argv[1].upper()
+    player2_name = '\n'.join(sys.argv[2].upper()) + '\n'
+
+    player3_name = sys.argv[3].upper() if num_of_players >= 3 else ""
+    player4_name = '\n'.join(sys.argv[4].upper()) + '\n' if num_of_players == 4 else ""
+
+    player1 = take_tiles_from_bag_at_start()
+    player2 = take_tiles_from_bag_at_start()
+    if num_of_players > 2:
+        player3 = take_tiles_from_bag_at_start()
+    if num_of_players > 3:
+        player4 = take_tiles_from_bag_at_start()
+
+
+    score = (player1_name + ": " + str(player1_score) + " puncte\n" +
+             player2_name.replace("\n", "") + ": " + str(player2_score) + " puncte\n")
+
+    if num_of_players > 2:
+        score += player3_name.replace("\n", "") + ": " + str(player3_score) + " puncte\n"
+
+    if num_of_players > 3:
+        score += player4_name.replace("\n", "") + ": " + str(player4_score) + " puncte\n"
+
+
+def game_over():
     global score, canvas_score
 
     final_scores = [(player1_name, player1_score), (player2_name, player2_score),
                     (player3_name, player3_score), (player4_name, player4_score)]
 
-    final_scores = sorted(final_scores, key=lambda s : s[1], reverse=True)
+    final_scores = sorted(final_scores, key=lambda s: s[1], reverse=True)
 
     score = "🎉 🎉 GAME OVER 🎉 🎉\n\n"
 
     place = 1
     for f_score in final_scores:
         score += "🏆" * place + " "
-        score += f_score[0].replace('\n','') + " 👉 " + str(f_score[1]) + "\n\n"
+        score += f_score[0].replace('\n', '') + " 👉 " + str(f_score[1]) + "\n\n"
         place += 1
 
     if canvas_score:
@@ -110,33 +138,28 @@ def game_over():
     if canvas_words:
         canvas.delete(canvas_words)
 
-    canvas_score = canvas.create_text(screen_width - 250, screen_height // 2 , text = score, font=("Arial Black", digit_font_size + 8, ""), fill="black")
+    canvas_score = canvas.create_text(screen_width - 250, screen_height // 2,
+                                      text=score,
+                                      font=("Arial Black", digit_font_size + 8, ""),
+                                      fill="black")
 
-    print("gata jocul !!!!")
-
-player1 = take_tiles_from_bag_at_start()
-player2 = take_tiles_from_bag_at_start()
-if num_of_players > 2:
-    player3 = take_tiles_from_bag_at_start()
-if num_of_players > 3:
-    player4 = take_tiles_from_bag_at_start()
 
 player1_name = "BIA"
 player2_name = "R\nA\nD\nU\n"
 player3_name = "DARIA"
 player4_name = "G\nD\nT\n"
 
+player1 = []
+player2 = []
+player3 = []
+player4 = []
+
 player1_score = 0
 player2_score = 0
 player3_score = 0
 player4_score = 0
 
-score = player1_name + ": " + str(player1_score) + " puncte\n" + player2_name.replace("\n","") + ": " + str(player2_score) + " puncte\n"
-if num_of_players > 2:
-    score += player3_name.replace("\n","") + ": " + str(player3_score) + " puncte\n"
-
-if num_of_players > 3:
-    score +=player4_name.replace("\n","") + ": " + str(player4_score) + " puncte\n"
+score = ""
 
 legend = "Aici apar cuvintele formate\nsi scorul acestora!"
 
@@ -153,7 +176,7 @@ try:
 
     with open("words.txt", 'r') as file:
         for line in file:
-            permitted_words.append(line.replace('\n',''))
+            permitted_words.append(line.replace('\n', ''))
 
 except FileNotFoundError:
     print("MISSING WORDS LIST")
@@ -165,8 +188,8 @@ def get_cell_type(row, col):
             return tile
     return " "
 
-def draw_scrabble_board():
 
+def draw_scrabble_board():
     window.geometry(f"{screen_width}x{screen_height}")
 
     for row in range(board_size):
@@ -181,10 +204,11 @@ def draw_scrabble_board():
             canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="black", width=line_weight)
 
             if cell_type != " ":
-                canvas.create_text(x1 + cell_size / 2, y1 + cell_size / 2, text=cell_type, font=("Arial Black", digit_font_size, "bold"), fill="black")
+                canvas.create_text(x1 + cell_size / 2, y1 + cell_size / 2,
+                                   text=cell_type, font=("Arial Black", digit_font_size, "bold"), fill="black")
+
 
 def draw_players_board():
-
     vector_x_start = board_x_start + 4 * cell_size
     vector_y_start = board_y_start + board_height + cell_size
 
@@ -196,7 +220,8 @@ def draw_players_board():
         y2 = y1 + cell_size
 
         canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
-        canvas.create_rectangle(x1+padding, y1+padding, x2-padding, y2-padding, fill=tile_fill, outline="black", width=line_weight - 2)
+        canvas.create_rectangle(x1 + padding, y1 + padding, x2 - padding, y2 - padding, fill=tile_fill, outline="black",
+                                width=line_weight - 2)
 
         if player1[i] != '':
             canvas.create_text(x1 + cell_size / 2,
@@ -205,7 +230,8 @@ def draw_players_board():
 
             canvas.create_text(x2 - 12.5,
                                y2 - 12.5,
-                               text=scrabble_points[player1[i]], font=("Arial Black", digit_font_size, "bold"), fill="black")
+                               text=scrabble_points[player1[i]], font=("Arial Black", digit_font_size, "bold"),
+                               fill="black")
         else:
             canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
 
@@ -221,7 +247,8 @@ def draw_players_board():
             y2 = y1 + cell_size
 
             canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
-            canvas.create_rectangle(x1+padding, y1+padding, x2-padding, y2-padding, fill=tile_fill, outline="black", width=line_weight - 2)
+            canvas.create_rectangle(x1 + padding, y1 + padding, x2 - padding, y2 - padding, fill=tile_fill,
+                                    outline="black", width=line_weight - 2)
 
             if player3[i] != '':
                 canvas.create_text(x1 + cell_size / 2,
@@ -230,7 +257,8 @@ def draw_players_board():
 
                 canvas.create_text(x2 - 12.5,
                                    y2 - 12.5,
-                                   text=scrabble_points[player3[i]], font=("Arial Black", digit_font_size, "bold"), fill="black")
+                                   text=scrabble_points[player3[i]], font=("Arial Black", digit_font_size, "bold"),
+                                   fill="black")
             else:
                 canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
 
@@ -245,7 +273,8 @@ def draw_players_board():
         y2 = y1 + cell_size
 
         canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
-        canvas.create_rectangle(x1+padding, y1+padding, x2-padding, y2-padding, fill=tile_fill, outline="black", width=line_weight - 2)
+        canvas.create_rectangle(x1 + padding, y1 + padding, x2 - padding, y2 - padding, fill=tile_fill, outline="black",
+                                width=line_weight - 2)
 
         if player2[i] != '':
             canvas.create_text(x1 + cell_size / 2,
@@ -254,7 +283,8 @@ def draw_players_board():
 
             canvas.create_text(x2 - 12.5,
                                y2 - 12.5,
-                               text=scrabble_points[player2[i]], font=("Arial Black", digit_font_size, "bold"), fill="black")
+                               text=scrabble_points[player2[i]], font=("Arial Black", digit_font_size, "bold"),
+                               fill="black")
         else:
             canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
 
@@ -270,7 +300,8 @@ def draw_players_board():
             y2 = y1 + cell_size
 
             canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
-            canvas.create_rectangle(x1+padding, y1+padding, x2-padding, y2-padding, fill=tile_fill, outline="black", width=line_weight - 2)
+            canvas.create_rectangle(x1 + padding, y1 + padding, x2 - padding, y2 - padding, fill=tile_fill,
+                                    outline="black", width=line_weight - 2)
 
             if player4[i] != '':
                 canvas.create_text(x1 + cell_size / 2,
@@ -279,13 +310,14 @@ def draw_players_board():
 
                 canvas.create_text(x2 - 12.5,
                                    y2 - 12.5,
-                                   text=scrabble_points[player4[i]], font=("Arial Black", digit_font_size, "bold"), fill="black")
+                                   text=scrabble_points[player4[i]], font=("Arial Black", digit_font_size, "bold"),
+                                   fill="black")
 
             else:
                 canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
 
-def paint_score():
 
+def paint_score():
     global score, canvas_score
     p1n = player1_name.replace("\n", "")
     p2n = player2_name.replace("\n", "")
@@ -299,14 +331,15 @@ def paint_score():
     if num_of_players > 2:
         score += p3n + " : " + str(player3_score) + " puncte\n"
     if num_of_players > 3:
-        score += p4n + " : " + str( player4_score) + " puncte\n"
+        score += p4n + " : " + str(player4_score) + " puncte\n"
 
     if canvas_score:
         canvas.delete(canvas_score)
-    canvas_score = canvas.create_text(screen_width - 200, 100, text = score, font=("Arial Black", digit_font_size + 8, ""), fill="black")
+    canvas_score = canvas.create_text(screen_width - 200, 100, text=score,
+                                      font=("Arial Black", digit_font_size + 8, ""), fill="black")
+
 
 def clean_word_from_board(_wrd, player):
-
     for (l, c, r) in _wrd:
         board[c][r] = ''
         paint(r, c, "default")
@@ -315,14 +348,15 @@ def clean_word_from_board(_wrd, player):
                 player[i] = l
                 break
 
-def paint(col, row, _letter):
 
+def paint(col, row, _letter):
     x1 = board_x_start + col * cell_size
     y1 = board_y_start + row * cell_size
     x2 = x1 + cell_size
     y2 = y1 + cell_size
 
-    canvas.create_rectangle(x1 + padding, y1 + padding, x2 - padding, y2 - padding, fill=tile_fill, outline="black", width=line_weight - 2)
+    canvas.create_rectangle(x1 + padding, y1 + padding, x2 - padding, y2 - padding, fill=tile_fill, outline="black",
+                            width=line_weight - 2)
 
     if _letter == '_':
         canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=line_weight)
@@ -337,7 +371,6 @@ def paint(col, row, _letter):
                            text=scrabble_points[_letter], font=("Arial Black", digit_font_size, "bold"), fill="black")
 
     if _letter == "default":
-
         cell_type = get_cell_type(row, col)
         color = colors[cell_type]
 
@@ -347,8 +380,8 @@ def paint(col, row, _letter):
                            y1 + cell_size / 2,
                            text=get_cell_type(row, col), font=("Arial Black", digit_font_size, "bold"), fill="black")
 
-def get_crossed_words(wrd: [(str, int, int)]):
 
+def get_crossed_words(wrd: [(str, int, int)]):
     initial = wrd.copy()
 
     board_words = []
@@ -391,8 +424,8 @@ def get_crossed_words(wrd: [(str, int, int)]):
     print(f"Cuvinte formate: {filtered_words}")
     return filtered_words
 
-def get_score(word_list):
 
+def get_score(word_list):
     global legend, canvas_words
 
     legend = "CUVINTE FORMATE\n"
@@ -406,7 +439,7 @@ def get_score(word_list):
         chained_letters = ""
         for l, r, c in _word:
 
-            cell_type = get_cell_type(r,c)
+            cell_type = get_cell_type(r, c)
             letter_score = scrabble_points[l]
 
             if cell_type == "DL":
@@ -423,7 +456,7 @@ def get_score(word_list):
             chained_letters += l.lower()
 
         if chained_letters not in permitted_words:
-            legend = "Cuvantul \"" +  chained_letters.upper() + "\" NU\neste in dictionar!\nFii mai atent!\nTrecem la urmatorul jucator!"
+            legend = "Cuvantul \"" + chained_letters.upper() + "\" NU\neste in dictionar!\nFii mai atent!\nTrecem la urmatorul jucator!"
             fs = 0
             break
 
@@ -435,14 +468,16 @@ def get_score(word_list):
         fs += s
         legend += " ● " + chained_letters.upper() + " : " + str(s) + "\n"
 
-
-    canvas_words = canvas.create_text(screen_width - 200, screen_height - 200, text=legend, font=("Arial Black", digit_font_size + 8, ""), fill="black")
+    canvas_words = canvas.create_text(screen_width - 200, screen_height - 200, text=legend,
+                                      font=("Arial Black", digit_font_size + 8, ""), fill="black")
     return fs
 
 
 def on_click(event):
-
-    global player_turn, letter_was_placed, word, letter, player1, player2, player3, player4, letter_id, board, player1_score, player2_score, player3_score, player4_score
+    global player_turn, letter_was_placed, word, letter
+    global player1, player2, player3, player4
+    global letter_id, board
+    global player1_score, player2_score, player3_score, player4_score
 
     player_placed_tile_on_board = False
     player_chose_tile_from_rack = False
@@ -453,7 +488,7 @@ def on_click(event):
     #player placed a letter onto the board
     if not letter_was_placed and board_x_start < event.x < board_x_start + board_width and board_y_start < event.y < board_y_start + board_height:
 
-        if board[selected_col][selected_row] == '': #board tile was empty
+        if board[selected_col][selected_row] == '':  #board tile was empty
             board[selected_col][selected_row] = letter
             player_placed_tile_on_board = True
             letter_was_placed = True
@@ -490,21 +525,20 @@ def on_click(event):
                 player4[letter_id] = ''
             show_finish_option_player4(True)
 
-
     #player selected a letter from his rack
-    if   player_turn == 1 and board_x_start + 4 * cell_size < event.x < board_x_start +  11  * cell_size and board_y_start + board_height + cell_size < event.y < board_y_start + board_height + 2 * cell_size:
+    if player_turn == 1 and board_x_start + 4 * cell_size < event.x < board_x_start + 11 * cell_size and board_y_start + board_height + cell_size < event.y < board_y_start + board_height + 2 * cell_size:
         letter_id = (event.x - board_x_start) // cell_size - 4
         if player1[letter_id] != '':
             player_chose_tile_from_rack = True
             letter_was_placed = False
 
-    elif player_turn == 2 and  board_x_start + board_width + cell_size < event.x < board_x_start + board_width + 2 * cell_size and board_y_start + 4 * cell_size < event.y < board_y_start + 11 * cell_size:
+    elif player_turn == 2 and board_x_start + board_width + cell_size < event.x < board_x_start + board_width + 2 * cell_size and board_y_start + 4 * cell_size < event.y < board_y_start + 11 * cell_size:
         letter_id = (event.y - board_y_start) // cell_size - 4
         if player2[letter_id] != '':
             player_chose_tile_from_rack = True
             letter_was_placed = False
 
-    elif player_turn == 3 and board_x_start + 4 * cell_size < event.x < board_x_start +  11  * cell_size and board_y_start - 2 * cell_size  < event.y < board_y_start - cell_size:
+    elif player_turn == 3 and board_x_start + 4 * cell_size < event.x < board_x_start + 11 * cell_size and board_y_start - 2 * cell_size < event.y < board_y_start - cell_size:
         letter_id = (event.x - board_x_start) // cell_size - 4
         if player3[letter_id] != '':
             player_chose_tile_from_rack = True
@@ -516,9 +550,8 @@ def on_click(event):
             player_chose_tile_from_rack = True
             letter_was_placed = False
 
-
     #player pressed check my word
-    if   player_turn == 1 and board_x_start + 12 * cell_size < event.x < board_x_start +  13 * cell_size and board_y_start + board_height + cell_size < event.y < board_y_start + board_height + 2 * cell_size:
+    if player_turn == 1 and board_x_start + 12 * cell_size < event.x < board_x_start + 13 * cell_size and board_y_start + board_height + cell_size < event.y < board_y_start + board_height + 2 * cell_size:
         player_turn = 1 + player_turn % num_of_players
         show_finish_option_player1(False)
 
@@ -538,7 +571,7 @@ def on_click(event):
         draw_players_board()
         show_turn_player2()
 
-    elif player_turn == 2 and board_x_start + board_width + cell_size < event.x <  board_x_start + board_width + 2 * cell_size and board_y_start + 12 * cell_size < event.y < board_y_start + 13 * cell_size:
+    elif player_turn == 2 and board_x_start + board_width + cell_size < event.x < board_x_start + board_width + 2 * cell_size and board_y_start + 12 * cell_size < event.y < board_y_start + 13 * cell_size:
         player_turn = 1 + player_turn % num_of_players
         show_finish_option_player2(False)
 
@@ -561,7 +594,7 @@ def on_click(event):
         else:
             show_turn_player1()
 
-    elif player_turn == 3 and board_x_start + 12 * cell_size < event.x < board_x_start +  13 * cell_size and board_y_start - 2 * cell_size < event.y < board_y_start - cell_size:
+    elif player_turn == 3 and board_x_start + 12 * cell_size < event.x < board_x_start + 13 * cell_size and board_y_start - 2 * cell_size < event.y < board_y_start - cell_size:
         player_turn = 1 + player_turn % num_of_players
         show_finish_option_player3(False)
 
@@ -584,7 +617,7 @@ def on_click(event):
         else:
             show_turn_player1()
 
-    elif player_turn == 4 and board_x_start - 2 * cell_size < event.x <  board_x_start - cell_size and board_y_start + 12 * cell_size < event.y < board_y_start + 13 * cell_size:
+    elif player_turn == 4 and board_x_start - 2 * cell_size < event.x < board_x_start - cell_size and board_y_start + 12 * cell_size < event.y < board_y_start + 13 * cell_size:
         player_turn = 1 + player_turn % num_of_players
         show_finish_option_player4(False)
 
@@ -605,26 +638,25 @@ def on_click(event):
         show_turn_player1()
 
     #player pressed reset my word
-    if   player_turn == 1 and board_x_start + 14 * cell_size < event.x < board_x_start +  15 * cell_size and board_y_start + board_height + cell_size < event.y < board_y_start + board_height + 2 * cell_size:
+    if player_turn == 1 and board_x_start + 14 * cell_size < event.x < board_x_start + 15 * cell_size and board_y_start + board_height + cell_size < event.y < board_y_start + board_height + 2 * cell_size:
         clean_word_from_board(word, player1)
         draw_players_board()
         word.clear()
 
-    elif player_turn == 2 and board_x_start + board_width + cell_size < event.x <  board_x_start + board_width + 2 * cell_size and board_y_start + 14 * cell_size < event.y < board_y_start + 15 * cell_size:
+    elif player_turn == 2 and board_x_start + board_width + cell_size < event.x < board_x_start + board_width + 2 * cell_size and board_y_start + 14 * cell_size < event.y < board_y_start + 15 * cell_size:
         clean_word_from_board(word, player2)
         draw_players_board()
         word.clear()
 
-    elif player_turn == 3 and board_x_start + 14 * cell_size < event.x < board_x_start +  15 * cell_size and board_y_start - 2 * cell_size < event.y < board_y_start - cell_size:
+    elif player_turn == 3 and board_x_start + 14 * cell_size < event.x < board_x_start + 15 * cell_size and board_y_start - 2 * cell_size < event.y < board_y_start - cell_size:
         clean_word_from_board(word, player3)
         draw_players_board()
         word.clear()
 
-    elif player_turn == 4 and board_x_start - 2 * cell_size < event.x <  board_x_start - cell_size and board_y_start + 14 * cell_size < event.y < board_y_start + 15 * cell_size:
+    elif player_turn == 4 and board_x_start - 2 * cell_size < event.x < board_x_start - cell_size and board_y_start + 14 * cell_size < event.y < board_y_start + 15 * cell_size:
         clean_word_from_board(word, player4)
         draw_players_board()
         word.clear()
-
 
     #player placed a letter on board -> draw his decision
     if player_placed_tile_on_board:
@@ -637,8 +669,8 @@ def on_click(event):
 
     paint_score()
 
-def show_finish_option_player1(draw):
 
+def show_finish_option_player1(draw):
     if draw:
         canvas.create_rectangle(board_x_start + 12 * cell_size,
                                 board_y_start + board_height + 2 * cell_size,
@@ -654,7 +686,7 @@ def show_finish_option_player1(draw):
                                 board_y_start + board_height + 2 * cell_size,
                                 board_x_start + 13 * cell_size,
                                 board_y_start + board_height + cell_size,
-                                fill="lightgray", outline="lightgray", width=line_weight)
+                                fill="#ffe9e8", outline="#ffe9e8", width=line_weight)
 
     if draw:
         canvas.create_rectangle(board_x_start + 14 * cell_size,
@@ -671,7 +703,9 @@ def show_finish_option_player1(draw):
                                 board_y_start + board_height + 2 * cell_size,
                                 board_x_start + 15 * cell_size,
                                 board_y_start + board_height + cell_size,
-                                fill="lightgray", outline="lightgray", width=line_weight)
+                                fill="#ffe9e8", outline="#ffe9e8", width=line_weight)
+
+
 def show_finish_option_player2(draw):
     if draw:
         canvas.create_rectangle(board_x_start + board_width + cell_size,
@@ -688,7 +722,7 @@ def show_finish_option_player2(draw):
                                 board_y_start + 12 * cell_size,
                                 board_x_start + board_width + 2 * cell_size,
                                 board_y_start + 13 * cell_size,
-                                fill="lightgray", outline="lightgray", width=line_weight)
+                                fill="#ffe9e8", outline="#ffe9e8", width=line_weight)
 
     if draw:
         canvas.create_rectangle(board_x_start + board_width + cell_size,
@@ -705,9 +739,10 @@ def show_finish_option_player2(draw):
                                 board_y_start + 14 * cell_size,
                                 board_x_start + board_width + 2 * cell_size,
                                 board_y_start + 15 * cell_size,
-                                fill="lightgray", outline="lightgray", width=line_weight)
-def show_finish_option_player3(draw):
+                                fill="#ffe9e8", outline="#ffe9e8", width=line_weight)
 
+
+def show_finish_option_player3(draw):
     if draw:
         canvas.create_rectangle(board_x_start + 12 * cell_size,
                                 board_y_start - cell_size,
@@ -715,14 +750,15 @@ def show_finish_option_player3(draw):
                                 board_y_start - 2 * cell_size,
                                 fill="orange", outline="black", width=line_weight)
 
-        canvas.create_text(board_x_start + 12 * cell_size + cell_size / 2, board_y_start - 2 * cell_size + cell_size / 2,
+        canvas.create_text(board_x_start + 12 * cell_size + cell_size / 2,
+                           board_y_start - 2 * cell_size + cell_size / 2,
                            text="✔", font=("Arial Black", 20, "bold"), fill="black")
     else:
         canvas.create_rectangle(board_x_start + 12 * cell_size,
                                 board_y_start - cell_size,
                                 board_x_start + 13 * cell_size,
                                 board_y_start - 2 * cell_size,
-                                fill="lightgray", outline="lightgray", width=line_weight)
+                                fill="#ffe9e8", outline="#ffe9e8", width=line_weight)
 
     if draw:
         canvas.create_rectangle(board_x_start + 14 * cell_size,
@@ -731,14 +767,17 @@ def show_finish_option_player3(draw):
                                 board_y_start - 2 * cell_size,
                                 fill="orange", outline="black", width=line_weight)
 
-        canvas.create_text(board_x_start + 14 * cell_size + cell_size / 2, board_y_start - 2 * cell_size + cell_size / 2,
+        canvas.create_text(board_x_start + 14 * cell_size + cell_size / 2,
+                           board_y_start - 2 * cell_size + cell_size / 2,
                            text="↺", font=("Arial Black", 25, "bold"), fill="black")
     else:
         canvas.create_rectangle(board_x_start + 14 * cell_size,
                                 board_y_start - cell_size,
                                 board_x_start + 15 * cell_size,
                                 board_y_start - 2 * cell_size,
-                                fill="lightgray", outline="lightgray", width=line_weight)
+                                fill="#ffe9e8", outline="#ffe9e8", width=line_weight)
+
+
 def show_finish_option_player4(draw):
     if draw:
         canvas.create_rectangle(board_x_start - 2 * cell_size,
@@ -755,7 +794,7 @@ def show_finish_option_player4(draw):
                                 board_y_start + 12 * cell_size,
                                 board_x_start - cell_size,
                                 board_y_start + 13 * cell_size,
-                                fill="lightgray", outline="lightgray", width=line_weight)
+                                fill="#ffe9e8", outline="#ffe9e8", width=line_weight)
 
     if draw:
         canvas.create_rectangle(board_x_start - 2 * cell_size,
@@ -772,7 +811,7 @@ def show_finish_option_player4(draw):
                                 board_y_start + 14 * cell_size,
                                 board_x_start - cell_size,
                                 board_y_start + 15 * cell_size,
-                                fill="lightgray", outline="lightgray", width=line_weight)
+                                fill="#ffe9e8", outline="#ffe9e8", width=line_weight)
 
 
 def show_turn_player1():
@@ -786,7 +825,11 @@ def show_turn_player1():
     elif num_of_players == 2 and canvas_player_turns[1]:
         canvas.delete(canvas_player_turns[1])
 
-    canvas_player_turns[0] = canvas.create_text(vector_x_start, vector_y_start - cell_size//3, text="🢃 " + player1_name + " 🢃" ,  font=("Arial Black", 15, "bold"), fill="black")
+    canvas_player_turns[0] = canvas.create_text(vector_x_start, vector_y_start - cell_size // 3,
+                                                text="🢃 " + player1_name + " 🢃", font=("Arial Black", 15, "bold"),
+                                                fill="black")
+
+
 def show_turn_player2():
     vector_x_start = board_x_start + board_width + 2.5 * cell_size
     vector_y_start = board_y_start + 4 * cell_size
@@ -794,14 +837,22 @@ def show_turn_player2():
     if canvas_player_turns[0]:
         canvas.delete(canvas_player_turns[0])
 
-    canvas_player_turns[1] = canvas.create_text(vector_x_start, vector_y_start + 3.5 * cell_size, text="🢀\n" + player2_name + "🢀" ,  font=("Arial Black", 15, "bold"),  fill="black")
+    canvas_player_turns[1] = canvas.create_text(vector_x_start, vector_y_start + 3.5 * cell_size,
+                                                text="🢀\n" + player2_name + "🢀", font=("Arial Black", 15, "bold"),
+                                                fill="black")
+
+
 def show_turn_player3():
     vector_x_start = board_x_start + 4 * cell_size + 7 * cell_size // 2
     vector_y_start = board_y_start - 2 * cell_size
 
     if canvas_player_turns[1]:
         canvas.delete(canvas_player_turns[1])
-    canvas_player_turns[2] = canvas.create_text(vector_x_start, vector_y_start - cell_size // 3, text="🢃 " + player3_name + " 🢃", font=("Arial Black", 15, "bold"), fill="black")
+    canvas_player_turns[2] = canvas.create_text(vector_x_start, vector_y_start - cell_size // 3,
+                                                text="🢃 " + player3_name + " 🢃", font=("Arial Black", 15, "bold"),
+                                                fill="black")
+
+
 def show_turn_player4():
     vector_x_start = board_x_start - 2.5 * cell_size
     vector_y_start = board_y_start + 4 * cell_size
@@ -809,7 +860,12 @@ def show_turn_player4():
     if canvas_player_turns[2]:
         canvas.delete(canvas_player_turns[2])
 
-    canvas_player_turns[3] = canvas.create_text(vector_x_start, vector_y_start + 3.5 * cell_size, text="🢂\n" + player4_name + "🢂", font=("Arial Black", 15, "bold"), fill="black")
+    canvas_player_turns[3] = canvas.create_text(vector_x_start, vector_y_start + 3.5 * cell_size,
+                                                text="🢂\n" + player4_name + "🢂", font=("Arial Black", 15, "bold"),
+                                                fill="black")
+
+
+init()
 
 window = tk.Tk()
 window.state("zoomed")
@@ -822,11 +878,12 @@ board_height = board_size * cell_size
 board_x_start = (screen_width - board_width) // 2
 board_y_start = (screen_height - board_height) // 2
 
-canvas = tk.Canvas(window, width=screen_width, height=screen_height, bg="lightgray")
+canvas = tk.Canvas(window, width=screen_width, height=screen_height, bg="#ffe9e8")
 canvas.pack()
-canvas_score = canvas.create_text(screen_width - 200, 100, text = score, font=("Arial Black", digit_font_size + 8, ""), fill="black")
-canvas_words = canvas.create_text(screen_width - 200, screen_height - 200, text = legend, font=("Arial Black", digit_font_size + 8, ""), fill="black")
-
+canvas_score = canvas.create_text(screen_width - 200, 100, text=score, font=("Arial Black", digit_font_size + 8, ""),
+                                  fill="black")
+canvas_words = canvas.create_text(screen_width - 200, screen_height - 200, text=legend,
+                                  font=("Arial Black", digit_font_size + 8, ""), fill="black")
 
 draw_scrabble_board()
 draw_players_board()
