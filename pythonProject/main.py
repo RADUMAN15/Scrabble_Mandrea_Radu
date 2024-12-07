@@ -5,7 +5,7 @@ cell_size = 50 #50 monitor 42 laptop
 letter_font_size = 14 #14 monitor 12 laptop
 digit_font_size = 10 #10 monitor 8 laptop
 num_of_tiles_at_start = 7
-num_of_players = 2
+num_of_players = 4
 
 line_weight = 4
 click = "<Button-1>"
@@ -31,18 +31,19 @@ special_tiles = {
            (8, 8), (8, 12), (11, 0), (11, 7), (11, 14), (12, 6), (12, 8), (14, 3), (14, 11)],
     "GO": [(7,7)]
 }
-# scrabble_letters = {
-#     'A': 11, 'B': 2, 'C': 2, 'D': 5, 'E': 11, 'F': 1, 'G': 2,
-#     'H': 1, 'I': 10, 'J': 1, 'K': 1, 'L': 4, 'M': 3, 'N': 5,
-#     'O': 8, 'P': 4, 'Q': 0, 'R': 5, 'S': 5, 'T': 7, 'U': 6,
-#     'V': 2, 'W': 0, 'X': 1, 'Y': 0, 'Z': 1
-# }
 scrabble_letters = {
-    'A': 5, 'B': 1, 'C': 1, 'D': 2, 'E': 5, 'F': 0, 'G': 1,
-    'H': 0, 'I': 5, 'J': 0, 'K': 0, 'L': 2, 'M': 1, 'N': 2,
-    'O': 4, 'P': 2, 'Q': 0, 'R': 2, 'S': 2, 'T': 3, 'U': 3,
-    'V': 1, 'W': 0, 'X': 0, 'Y': 0, 'Z': 0
+    'A': 11, 'B': 2, 'C': 2, 'D': 5, 'E': 11, 'F': 1, 'G': 2,
+    'H': 1, 'I': 10, 'J': 1, 'K': 1, 'L': 4, 'M': 3, 'N': 5,
+    'O': 8, 'P': 4, 'Q': 0, 'R': 5, 'S': 5, 'T': 7, 'U': 6,
+    'V': 2, 'W': 0, 'X': 1, 'Y': 0, 'Z': 1
 }
+
+# scrabble_letters = {
+#     'A': 5, 'B': 1, 'C': 1, 'D': 2, 'E': 5, 'F': 0, 'G': 1,
+#     'H': 0, 'I': 5, 'J': 0, 'K': 0, 'L': 2, 'M': 1, 'N': 2,
+#     'O': 4, 'P': 2, 'Q': 0, 'R': 2, 'S': 2, 'T': 3, 'U': 3,
+#     'V': 1, 'W': 0, 'X': 0, 'Y': 0, 'Z': 0
+# }
 scrabble_points = {
     'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
     'H': 4, 'I': 1, 'J': 8, 'K': 5, 'L': 1, 'M': 3, 'N': 1,
@@ -75,6 +76,43 @@ def take_tiles_from_bag_after_word(player):
         if player[i] == '' and len(drawn_tiles) > 0:
             player[i] = drawn_tiles.pop(0)
 
+def check_player_bag_empty(player):
+    has_at_least_one = False
+    for letter in player:
+        if letter != '':
+            has_at_least_one = True
+
+    if has_at_least_one:
+        print("mai are piese")
+
+    return (not has_at_least_one) and (len(scrabble_list) == 0)
+
+def game_over():
+
+    global score, canvas_score
+
+    final_scores = [(player1_name, player1_score), (player2_name, player2_score),
+                    (player3_name, player3_score), (player4_name, player4_score)]
+
+    final_scores = sorted(final_scores, key=lambda s : s[1], reverse=True)
+
+    score = "🎉 🎉 GAME OVER 🎉 🎉\n\n"
+
+    place = 1
+    for f_score in final_scores:
+        score += "🏆" * place + " "
+        score += f_score[0].replace('\n','') + " 👉 " + str(f_score[1]) + "\n\n"
+        place += 1
+
+    if canvas_score:
+        canvas.delete(canvas_score)
+
+    if canvas_words:
+        canvas.delete(canvas_words)
+
+    canvas_score = canvas.create_text(screen_width - 250, screen_height // 2 , text = score, font=("Arial Black", digit_font_size + 8, ""), fill="black")
+
+    print("gata jocul !!!!")
 
 player1 = take_tiles_from_bag_at_start()
 player2 = take_tiles_from_bag_at_start()
@@ -401,6 +439,7 @@ def get_score(word_list):
     canvas_words = canvas.create_text(screen_width - 200, screen_height - 200, text=legend, font=("Arial Black", digit_font_size + 8, ""), fill="black")
     return fs
 
+
 def on_click(event):
 
     global player_turn, letter_was_placed, word, letter, player1, player2, player3, player4, letter_id, board, player1_score, player2_score, player3_score, player4_score
@@ -491,6 +530,10 @@ def on_click(event):
         else:
             clean_word_from_board(word, player1)
 
+        if check_player_bag_empty(player1):
+            game_over()
+            return
+
         word.clear()
         draw_players_board()
         show_turn_player2()
@@ -506,6 +549,10 @@ def on_click(event):
             player2_score += sc
         else:
             clean_word_from_board(word, player2)
+
+        if check_player_bag_empty(player2):
+            game_over()
+            return
 
         word.clear()
         draw_players_board()
@@ -526,6 +573,10 @@ def on_click(event):
         else:
             clean_word_from_board(word, player3)
 
+        if check_player_bag_empty(player3):
+            game_over()
+            return
+
         word.clear()
         draw_players_board()
         if num_of_players > 3:
@@ -544,6 +595,10 @@ def on_click(event):
             player4_score += sc
         else:
             clean_word_from_board(word, player4)
+
+        if check_player_bag_empty(player4):
+            game_over()
+            return
 
         word.clear()
         draw_players_board()
