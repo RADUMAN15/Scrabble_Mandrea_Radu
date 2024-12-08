@@ -556,6 +556,19 @@ def get_crossed_words(wrd: [(str, int, int)]):
     return filtered_words
 
 
+def fill(matrix, i, j):
+
+    if (i < 0 or i >= board_size or
+            j < 0 or j >= board_size or matrix[i][j] == 0):
+        return
+    matrix[i][j] = 0
+
+    fill(matrix, i + 1, j)
+    fill(matrix, i - 1, j)
+    fill(matrix, i, j + 1)
+    fill(matrix, i, j - 1)
+
+
 def get_score(word_list):
     global legend, canvas_words
 
@@ -564,6 +577,33 @@ def get_score(word_list):
     fs = 0
     double_w = False
     triple_w = False
+
+    neighbours = [[0 for _ in range(15)] for _ in range(15)]
+
+    for i in range(board_size):
+        for j in range(board_size):
+            neighbours[i][j] = 1 if board[i][j] != "" else 0
+
+    islands = 0
+    for i in range(board_size):
+        for j in range(board_size):
+            if neighbours[i][j] == 1:
+                islands += 1
+                fill(neighbours, i, j)
+
+    if islands != 1:
+        canvas_words = canvas.create_text(screen_width - 300,
+                                          screen_height - 200,
+                                          text="Literele trebuie "
+                                               "conectate de\ncele "
+                                               "deja plasate!\n"
+                                               "Trecem la urmatorul "
+                                               "jucator!\n",
+                                          font=("Arial Black",
+                                                digit_font_size + 8,
+                                                ""),
+                                          fill="red")
+        return 0
 
     for _word in word_list:
         s = 0
