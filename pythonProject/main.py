@@ -63,6 +63,11 @@ scrabble_list = [letter for letter, count in scrabble_letters.items()
 
 
 def take_tiles_from_bag_at_start(num_tiles=num_of_tiles_at_start):
+    """Draws a specified number of tiles from the bag at the start of the game.
+
+    Returns:
+       list: A list of drawn tiles.
+    """
     global scrabble_list
     drawn_tiles = random.sample(
         scrabble_list, min(num_tiles, len(scrabble_list)))
@@ -72,6 +77,23 @@ def take_tiles_from_bag_at_start(num_tiles=num_of_tiles_at_start):
 
 
 def take_tiles_from_bag_after_word(player):
+    """Refills a player's tiles from the scrabble bag after a word is played.
+
+    This function calculates the number of tiles missing from the player's
+    hand (empty slots represented by empty strings), draws the required
+    number of tiles from the `scrabble_list`, and refills the player's hand
+    with the drawn tiles. The scrabble bag (`scrabble_list`) is modified in
+    place to remove the drawn tiles.
+
+    Args:
+        player (list): The player's current tiles, represented as a list.
+                       Empty slots in the hand should be represented by ''.
+
+    Returns:
+        None: The function modifies the `player` list and `scrabble_list`
+              in place. It does not return a value.
+
+    """
     missing = sum(1 for tile in player if tile == '')
 
     drawn_tiles = random.sample(scrabble_list,
@@ -87,6 +109,12 @@ def take_tiles_from_bag_after_word(player):
 
 
 def check_player_bag_empty(player):
+    """Check if the player's hand, and the scrabble bag are empty.
+
+    This function determines if the game should end by checking two conditions:
+    - The player's hand has no tiles (all slots are empty strings).
+    - The scrabble bag (`scrabble_list`) is empty.
+    """
     has_at_least_one = False
     for letter in player:
         if letter != '':
@@ -96,6 +124,23 @@ def check_player_bag_empty(player):
 
 
 def init():
+    """Initialize the game state by setting up player names, tiles, and scores.
+
+    This function:
+    - Determines the number of players from command-line arguments.
+    - Reads player names and initializes their tile racks.
+    - Prepares the initial score display for all players.
+
+    Globals:
+        num_of_players (int): The number of players in the game, determined
+                              from command-line arguments.
+        player1_name, player2_name, player3_name, player4_name (str):
+            The names of the players, converted to uppercase.
+        player1, player2, player3, player4 (list):
+            The initial tiles for each player, drawn from the scrabble bag.
+        score (str): A formatted string displaying each player's name
+                     and initial score.
+    """
     global num_of_players
     global player1_name, player2_name, player3_name, player4_name
     global player1, player2, player3, player4
@@ -134,7 +179,17 @@ def init():
 
 
 def game_over():
+    """Calculate and display the ranking.
 
+    This function creates a list of tuples (player_name, score)
+    and sorts the list by the 2nd item in descending order and
+    computes the final message being printed on canvas_score.
+    Globals:
+        score (str): A formatted string displaying each player's name
+                     and initial score.
+        canvas_score (int): A canvas rendering each player's name
+                     and initial score.
+    """
     global score, canvas_score
 
     final_scores = [(player1_name, player1_score),
@@ -204,6 +259,15 @@ except FileNotFoundError:
 
 
 def get_cell_type(row, col):
+    """Determine the property of a cell on the scrabble board.
+
+    This function checks if the cell at the given row and column coordinates
+    corresponds to a special tile (e.g., double word score,
+    triple letter score) and returns the type of the tile the data being
+    processed from a dictionary.
+    If the cell does not have any special type,
+    it returns a default value.
+    """
     for tile, positions in special_tiles.items():
         if (row, col) in positions:
             return tile
@@ -211,6 +275,14 @@ def get_cell_type(row, col):
 
 
 def draw_scrabble_board():
+    """Draw the scrabble board and the special tiles .
+
+    This function gets the screen width and height and calculates the board's
+    start x and y coordinates. Based on that, having a cell size the function
+    draws 15 * 15 rectangles and fill's them with colors and text from two
+    dictionaries 'special_tiles' and 'colors' accordingly to the tile's
+    property.
+    """
     window.geometry(f"{screen_width}x{screen_height}")
 
     for row in range(board_size):
@@ -239,6 +311,14 @@ def draw_scrabble_board():
 
 
 def draw_players_board():
+    """Draw the player's racks.
+
+    This function draws the player racks and their letters based on
+    players_letters, a list containing chars. First it calculates
+    the coordinates to draw the racks, because they are placed on the
+    south, east, north, west of the board.
+
+    """
     vector_x_start = board_x_start + 4 * cell_size
     vector_y_start = board_y_start + board_height + cell_size
 
@@ -426,6 +506,14 @@ def draw_players_board():
 
 
 def paint_score():
+    """Display score after each word being placed.
+
+    This function modifies a global var `score` to update the score
+    for each player after a word has been placed correctly on the
+    board. So, it computes again the str of player_name : score, and
+    updates the canvas.
+
+    """
     global score, canvas_score
     p1n = player1_name.replace("\n", "")
     p2n = player2_name.replace("\n", "")
@@ -453,6 +541,13 @@ def paint_score():
 
 
 def clean_word_from_board(_wrd, player):
+    """Repaint the board when player undo, or unaccepted word.
+
+    This function parses the last word placed and removes
+    letter by letter, each letter being repainted on the board.
+    Each letter is replaced into the player's rack after repaint.
+
+    """
     for (l, c, r) in _wrd:
         board[c][r] = ''
         paint(r, c, "default")
@@ -463,6 +558,17 @@ def clean_word_from_board(_wrd, player):
 
 
 def paint(col, row, _letter):
+    """Repaint a specific letter on a row and column.
+
+    This function is repainting a letter in 2 scenarios:
+        - the letter is placed on the scrabble board
+        - the letter is taken from the rack
+
+    If the letter is '_' we just repaint an empty rack slot.
+    Else if it is 'default' the function repaints a
+    board tile: (color + text)
+    Otherwise, paints the letter on board
+    """
     x1 = board_x_start + col * cell_size
     y1 = board_y_start + row * cell_size
     x2 = x1 + cell_size
@@ -513,6 +619,16 @@ def paint(col, row, _letter):
 
 
 def get_crossed_words(wrd: [(str, int, int)]):
+    """Return all words obtained from initially placed letters.
+
+    The function iterates the board from up to down and left to right
+    and gets all the words on the board. After, to  only get the
+    words obtained at the current turn we drain the words that don't
+    contain a letter used at the beginning(i.e. in 'initial').
+
+    Return:
+        List of crossed words obtained at a turn
+    """
     initial = wrd.copy()
 
     board_words = []
@@ -557,7 +673,7 @@ def get_crossed_words(wrd: [(str, int, int)]):
 
 
 def fill(matrix, i, j):
-
+    """Perform dfs exploration on board."""
     if (i < 0 or i >= board_size or
             j < 0 or j >= board_size or matrix[i][j] == 0):
         return
@@ -570,6 +686,17 @@ def fill(matrix, i, j):
 
 
 def get_score(word_list):
+    """Compute the score for a given word.
+
+    This function starts from the crossed words list. First it checks if
+    the words are connected thanks to a connected components alg. If all words
+    are connected it iterates all the words and calculates the points by
+    checking if it should double, triple a word / letter. After that we
+    return the score. If a test fails, we return 0
+
+    Return:
+        the score computed being given a list of words
+    """
     global legend, canvas_words
 
     legend = "CUVINTE FORMATE\n"
@@ -652,6 +779,26 @@ def get_score(word_list):
 
 
 def on_click(event):
+    """Get the click coordinates stored in event param.
+
+    This function is the core of the game. It performs various checks:
+
+        - A letter was taken from the rack and placed from the board
+        - A player selected a letter from the rack
+        - A player pressed check my word button
+        - A player reset it's placed letters
+
+        After we match on event of the above types, the function also
+        checks is the author is ok (ex: player one should select a letter
+        only from his rack!)
+
+        Based on the event encountered the function performs
+        different procedures
+        If player pressed check_my_word we compute the score and check
+        if the game is over. If the score is null we have to remove
+        the word from board.
+        Otherwise, we switch to the next player
+    """
     global player_turn, letter_was_placed, word, letter
     global player1, player2, player3, player4
     global letter_id, board
